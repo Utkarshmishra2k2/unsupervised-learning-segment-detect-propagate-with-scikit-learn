@@ -20,8 +20,85 @@ def blobs_data(random_state=42):
     )
     return X, y
 
-# Step 2 - fit_kmeans (not yet solved)
-# TODO: implement
+# Step 2 - fit_kmeans
+import numpy as np
+
+class _NumpyKMeans:
+    def __init__(self, n_clusters, n_init=10, random_state=42, max_iter=300):
+        self.n_clusters = n_clusters
+        self.n_init = n_init
+        self.random_state = random_state
+        self.max_iter = max_iter
+
+    def _initialize(self, X, rng):
+        centers = [X[rng.randint(len(X))]]
+        closest_sq = np.sum((X - centers[0]) ** 2, axis=1)
+
+        for _ in range(1, self.n_clusters):
+            total = closest_sq.sum()
+            if total == 0:
+                idx = rng.randint(len(X))
+            else:
+                idx = rng.choice(len(X), p=closest_sq / total)
+            centers.append(X[idx])
+            closest_sq = np.minimum(
+                closest_sq, np.sum((X - X[idx]) ** 2, axis=1)
+            )
+
+        return np.array(centers, dtype=float)
+
+    def fit(self, X):
+        X = np.asarray(X, dtype=float)
+        rng = np.random.RandomState(self.random_state)
+        best_inertia = np.inf
+
+        for _ in range(self.n_init):
+            centers = self._initialize(X, rng)
+
+            for _ in range(self.max_iter):
+                distances = np.sum((X[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+                labels = distances.argmin(axis=1)
+                new_centers = centers.copy()
+
+                for j in range(self.n_clusters):
+                    points = X[labels == j]
+                    if len(points):
+                        new_centers[j] = points.mean(axis=0)
+                    else:
+                        farthest = distances.min(axis=1).argmax()
+                        new_centers[j] = X[farthest]
+
+                if np.allclose(new_centers, centers):
+                    centers = new_centers
+                    break
+                centers = new_centers
+
+            distances = np.sum((X[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+            labels = distances.argmin(axis=1)
+            inertia = distances[np.arange(len(X)), labels].sum()
+
+            if inertia < best_inertia:
+                best_inertia = inertia
+                self.cluster_centers_ = centers.copy()
+                self.labels_ = labels.copy()
+                self.inertia_ = float(inertia)
+
+        return self
+
+    def predict(self, X):
+        X = np.asarray(X, dtype=float)
+        distances = np.sum(
+            (X[:, None, :] - self.cluster_centers_[None, :, :]) ** 2,
+            axis=2,
+        )
+        return distances.argmin(axis=1)
+
+def fit_kmeans(X, k, random_state=42):
+    return _NumpyKMeans(
+        n_clusters=k,
+        n_init=10,
+        random_state=random_state,
+    ).fit(X)
 
 # Step 3 - inertia_curve (not yet solved)
 # TODO: implement
