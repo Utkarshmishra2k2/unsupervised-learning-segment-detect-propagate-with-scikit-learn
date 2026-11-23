@@ -105,8 +105,20 @@ def inertia_curve(X, ks):
     # TODO: {k: inertia of fit_kmeans(X, k)}.
     return {k: float(fit_kmeans(X, k).inertia_) for k in ks}
 
-# Step 4 - silhouette_curve (not yet solved)
-# TODO: implement
+# Step 4 - silhouette_curve
+from sklearn.metrics import silhouette_score
+
+def silhouette_curve(X, ks):
+    curve = {}
+    for k in ks:
+        if k < 2:
+            raise ValueError("Each k must be at least 2.")
+        model = fit_kmeans(X, k)
+        curve[k] = float(silhouette_score(X, model.labels_))
+    return curve
+
+def best_k_by_silhouette(curve):
+    return min(curve, key=lambda k: (-curve[k], k))
 
 # Step 5 - fit_dbscan (not yet solved)
 # TODO: implement
