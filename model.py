@@ -100,8 +100,10 @@ def fit_kmeans(X, k, random_state=42):
         random_state=random_state,
     ).fit(X)
 
-# Step 3 - inertia_curve (not yet solved)
-# TODO: implement
+# Step 3 - inertia_curve
+def inertia_curve(X, ks):
+    # TODO: {k: inertia of fit_kmeans(X, k)}.
+    return {k: float(fit_kmeans(X, k).inertia_) for k in ks}
 
 # Step 4 - silhouette_curve (not yet solved)
 # TODO: implement
